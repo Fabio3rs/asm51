@@ -26,7 +26,6 @@
 #include "symbols.h"
 
 #define is8(x) (((x) & 0x00ff) == (x))
-#define is11(x) (((x) & 0x07ff) == (x))
 #define is16(x) (((x) & 0xffff) == (x))
 #define isrel(x) ((x) >= -128 && (x) < 128)
 #define isbm(x) (( ((x) >= 128) && !((x) & 0x07) ) || ((x) >= 0x20 && (x) < 0x40))
@@ -420,8 +419,9 @@ data32:	expr
 
 addr11:	expr
       	{
-		if (!is11($<val>1) && pass == 2)
-			error(_("address exceeds 11 bits"));
+		if (pass == 2 && (!is16($<val>1) ||
+		    (($<val>1 ^ ((emit_pc + 2) & 0xffff)) & 0xf800)))
+			error(_("AJMP/ACALL target outside current 2kB page"));
 	}
       ;
 
@@ -492,4 +492,3 @@ Ri:	R0	{ $<val>$ = 0; }
   ;
 
 %%
-
